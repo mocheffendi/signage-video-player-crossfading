@@ -9,6 +9,8 @@ const configPath = path.join(app.getPath('userData'), 'data', 'config.json');
 const playlistPath = path.join(app.getPath('userData'), 'data', 'playlist.json');
 const csvPath = path.join(app.getPath('userData'), 'data', 'playlog.csv');
 
+const playlistDir = path.dirname(playlistPath);
+
 // const logPath = path.join(app.getPath('userData'), 'data', 'app.log');
 // const logStream = fs.createWriteStream(logPath, { flags: 'a' });
 
@@ -30,9 +32,26 @@ app.whenReady().then(() => {
 });
 
 function createWindows() {
+    if (!fs.existsSync(playlistDir)) {
+        fs.mkdirSync(playlistDir, { recursive: true });
+        console.log("Data directory created:", playlistDir);
+    }
+
     if (!fs.existsSync(playlistPath)) {
         fs.writeFileSync(playlistPath, '[]');
     }
+
+    if (!fs.existsSync(configPath)) {
+        const defaultConfig = {
+            x: 0, y: 0, width: 300, height: 200,
+            alwaysOnTop: true,
+            mainX: 568, mainY: 435,
+            mainWidth: 800, mainHeight: 600
+        };
+        fs.writeFileSync(configPath, JSON.stringify(defaultConfig, null, 2));
+        console.log("Default config created:", defaultConfig);
+    }
+
     const config = loadConfig();
     const { x = 0, y = 0, width = 300, height = 200, alwaysOnTop = true } = config;
     const { mainX = 568, mainY = 435 } = config;
