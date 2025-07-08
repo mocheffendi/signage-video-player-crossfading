@@ -198,6 +198,7 @@ function loadConfig() {
 }
 
 ipcMain.on('setAlwaysOnTop', (e, state) => {
+    console.log("Setting alwaysOnTop to:", state);
     if (miniWin && !miniWin.isDestroyed()) {
         miniWin.setAlwaysOnTop(!!state);
 
@@ -320,4 +321,38 @@ ipcMain.on('nowPlaying', (_, data) => {
     if (mainWin && !mainWin.isDestroyed()) {
         mainWin.webContents.send('nowPlaying', data);
     }
+});
+
+ipcMain.on('play-item', (event, index) => {
+    // Logika kamu untuk mulai playback dari index tertentu
+    const item = playlist[index];
+    if (item) {
+        // Jalankan logic putar file video / gambar
+        playMedia(item);
+    }
+});
+
+ipcMain.on('stop-media', () => {
+    if (miniWin && !miniWin.isDestroyed()) {
+        miniWin.webContents.send('stop-media');
+        console.log('[main] Sent stop-media to mini window');
+    }
+});
+
+ipcMain.on('play-media', () => {
+    if (miniWin && !miniWin.isDestroyed()) {
+        miniWin.webContents.send('play-media');
+        console.log('[main] Sent play-media to mini window');
+    }
+});
+
+function reloadMiniWindow() {
+    if (miniWin && !miniWin.isDestroyed()) {
+        miniWin.reload();
+    }
+}
+
+// You can wire that up to an IPC event:
+ipcMain.on('reload-mini', () => {
+    reloadMiniWindow();
 });

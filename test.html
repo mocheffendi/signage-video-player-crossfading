@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Tailwind CDN Demo</title>
+    <!-- <script src="./tailwin.js"></script>
+    <script>
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            fontFamily: {
+              sans: ["Inter", "sans-serif"],
+            },
+          },
+        },
+      };
+    </script> -->
+    <link rel="stylesheet" href="./output.css">
+
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet" />
+  </head>
+  <body class="bg-black text-white font-sans p-10">
+    <h1 class="text-3xl font-bold text-green-400">🎉 Tailwind.js Works!</h1>
+    <p class="text-sm mt-2 text-zinc-300">Kamu berhasil jalankan Tailwind tanpa build!</p>
+
+    <div class="mt-6 grid grid-cols-2 gap-4">
+      <div class="bg-zinc-800 p-4 rounded-xl shadow">
+        <h2 class="text-xl font-semibold mb-2">Left Panel</h2>
+        <ul class="text-sm space-y-1">
+          <li class="hover:bg-zinc-700 px-2 py-1 rounded">Video A.mp4</li>
+          <li class="hover:bg-zinc-700 px-2 py-1 rounded">Video B.mp4</li>
+        </ul>
+      </div>
+
+      <div class="bg-zinc-800 p-4 rounded-xl shadow">
+        <h2 class="text-xl font-semibold mb-2">Right Panel</h2>
+        <p class="text-green-400">Now Playing: Video A</p>
+      </div>
+    </div>
+  </b

@@ -29,5 +29,12 @@ contextBridge.exposeInMainWorld('electronAPI', {
     receive: (channel, callback) => {
         ipcRenderer.on(channel, (event, ...args) => callback(...args));
     },
+    playItem: (index) => ipcRenderer.send('play-item', index),
+    stopMedia: () => ipcRenderer.send('stop-media'),
+    onStopMedia: (callback) => ipcRenderer.on('stop-media', callback),
+    playMedia: (callback) => ipcRenderer.send('play-media', callback),
+    onPlayMedia: (callback) => ipcRenderer.on('play-media', callback),
+    reloadMini: () => ipcRenderer.send('reload-mini'),
+    // selectIndex: (index) => ipcRenderer.send('select-index', index),
     // loadConfig: () => loadConfig()
 });

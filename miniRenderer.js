@@ -45,6 +45,8 @@ function playNext() {
 
     if (media.type === 'image') {
         standbyImage.src = media.path;
+        standbyImage.style.display = 'block'; // pastikan gambar tampil
+        standbyImage.classList.remove('hidden');
         standbyImage.onload = () => {
             crossfade(activeVideo, standbyImage);
             crossfade(activeImage, standbyImage);
@@ -145,6 +147,8 @@ function playMedia(media) {
 
     if (media.type === 'image') {
         standbyImage.src = media.path;
+        standbyImage.style.display = 'block'; // pastikan gambar tampil
+        standbyImage.classList.remove('hidden');
         standbyImage.onload = () => {
             crossfade(activeVideo, standbyImage);
             crossfade(activeImage, standbyImage);
@@ -233,4 +237,53 @@ function formatDate(d) {
 
 function formatTime(d) {
     return `${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+}
+
+let slideshowTimer = null; // pastikan ini global di script kamu
+
+window.electronAPI?.onStopMedia(() => {
+    console.log('[miniRenderer] stop-media event received');
+    stopMedia();
+});
+
+window.electronAPI?.onPlayMedia(() => {
+    console.log('[miniRenderer] play-media event received');
+    playNext();
+});
+
+function stopMedia() {
+    // Matikan semua video
+    const videoA = document.getElementById('videoA');
+    const videoB = document.getElementById('videoB');
+
+    [videoA, videoB].forEach(video => {
+        if (video) {
+            video.pause();
+            video.removeAttribute('src'); // benar-benar matikan
+            video.load(); // reset
+            video.classList.add('hidden'); // sembunyikan
+        }
+    });
+
+    // Hentikan slideshow image
+    const imageA = document.getElementById('imageA');
+    const imageB = document.getElementById('imageB');
+
+    [imageA, imageB].forEach(img => {
+        img.src = ''; // kosongkan src untuk menghentikan slideshow
+        img.removeAttribute('src'); // benar-benar matikan
+        img.style.display = 'none';
+        img.classList.add('hidden');
+    });
+
+
+    // Hentikan timer (untuk image transition jika ada)
+    // if (slideshowTimer) {
+    if (timeoutRef) clearTimeout(timeoutRef);
+    // clearTimeout(slideshowTimer);
+    // slideshowTimer = null;
+    // }
+
+    // (Opsional) Reset status
+    // updateStatus("Stopped");
 }

@@ -400,11 +400,15 @@
 // });
 
 // ========== ELEMENT SELECTORS ========== //
+
+
 const addBtn = document.getElementById('addBtn');
 const playlistBox = document.getElementById('playlistBox');
 const alwaysOnTop = document.getElementById('alwaysOnTop');
 const videoSlider = document.getElementById('videoSlider');
 const videoTime = document.getElementById('videoTime');
+const currentTime = document.getElementById('currentTime');
+const totalTime = document.getElementById('totalTime');
 const btnUp = document.getElementById('btnUp');
 const btnDown = document.getElementById('btnDown');
 
@@ -424,6 +428,7 @@ const btnLaporan = document.getElementById('btnLaporan');
 const laporanModal = document.getElementById('laporanModal');
 const laporanContent = document.getElementById('laporanContent');
 const closeLaporan = document.getElementById('closeLaporan');
+const closeSettings = document.getElementById('closeSettings');
 const filterStart = document.getElementById('filterStart');
 const filterEnd = document.getElementById('filterEnd');
 const btnFilterLog = document.getElementById('btnFilterLog');
@@ -520,11 +525,17 @@ function renderPlaylist(list) {
 }
 
 function highlightItem(index) {
-    document.querySelectorAll('.playlist-item').forEach((el, i) => {
-        el.classList.remove('bg-blue-600', 'text-white');
-        if (i === index) el.classList.add('bg-blue-600', 'text-white');
+    const items = document.querySelectorAll('.playlist-item');
+    items.forEach((item, i) => {
+        if (i === index) {
+            item.classList.add('bg-zinc-800'); // atau 'selected' kalau kamu pakai class sendiri
+            item.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); // agar terlihat
+        } else {
+            item.classList.remove('bg-zinc-800'); // atau 'selected'
+        }
     });
 }
+
 
 function swapItems(a, b) {
     [currentPlaylist[a], currentPlaylist[b]] = [currentPlaylist[b], currentPlaylist[a]];
@@ -546,7 +557,9 @@ window.electronAPI.onUpdateSlider(({ current, total }) => {
         videoSlider.max = total || 0;
         videoSlider.value = current || 0;
     }
-    videoTime.textContent = `${formatTime(current)} / ${formatTime(total)}`;
+    // videoTime.textContent = `${formatTime(current)} / ${formatTime(total)}`;
+    currentTime.textContent = formatTime(current);
+    totalTime.textContent = formatTime(total);
 });
 
 videoSlider.addEventListener('input', () => isSliderChanging = true);
@@ -569,6 +582,7 @@ btnUp.onclick = () => {
         selectedIndex--;
         updatePlaylist(currentPlaylist);
         renderPlaylist(currentPlaylist);
+        highlightSelected(selectedIndex);
     }
 };
 
@@ -578,6 +592,7 @@ btnDown.onclick = () => {
         selectedIndex++;
         updatePlaylist(currentPlaylist);
         renderPlaylist(currentPlaylist);
+        highlightSelected(selectedIndex);
     }
 };
 
@@ -642,7 +657,7 @@ btnSetApply.onclick = () => {
         height: +sizeSetH.value
     };
     window.electronAPI.sendMiniBounds(bounds);
-    settingsModal.classList.add('hidden');
+    // settingsModal.classList.add('hidden');
 };
 
 // ========== LAPORAN & FILTER ========== //
@@ -654,6 +669,8 @@ btnLaporan.onclick = async () => {
 };
 
 closeLaporan.onclick = () => laporanModal.classList.add('hidden');
+
+closeSettings.onclick = () => settingsModal.classList.add('hidden');
 
 btnFilterLog.onclick = () => {
     const start = filterStart.value;
@@ -675,7 +692,7 @@ btnResetFilter.onclick = () => {
 
 btnExportXLSX.onclick = () => {
     if (!currentTableData.length) return;
-    const header = ['No', 'Tanggal', 'Nama File', 'Durasi (detik)', 'Jam Mulai', 'Jam Selesai'];
+    const header = ['No', 'Date', 'FileName', 'Duration (seconds)', 'Start', 'End'];
     const csvString = [header, ...currentTableData].map(row => row.join(',')).join('\n');
     window.electronAPI.exportToXLSX(csvString);
 };
@@ -724,3 +741,33 @@ window.electronAPI.receive('init-config', (config) => {
         alwaysOnTopCheckbox.checked = config.alwaysOnTop;
     }
 });
+
+function highlightSelected(index) {
+    const items = document.querySelectorAll('.playlist-item');
+    items.forEach((item, i) => {
+        if (i === index) {
+            item.classList.add('selected');
+            item.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); // opsional, agar auto scroll
+        } else {
+            item.classList.remove('selected');
+        }
+    });
+}
+
+const btnPlay = document.getElementById('btnPlay');
+const btnStop = document.getElementById('btnStop');
+
+btnPlay.onclick = () => {
+    console.log("play button clicked");
+    // window.electronAPI?.playMedia(); // trigger IPC to main
+    window.electronAPI.reloadMini();
+};
+
+btnStop.onclick = () => {
+    window.electronAPI?.stopMedia(); // trigger IPC to main
+};
+
+// document.getElementById('btnReloadMini').onclick = () => {
+//   window.electronAPI.reloadMini();
+// };
+

@@ -1,81 +1,16 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
   <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="X-UA-Compatible" content="ie=edge" />
     <title>Signage Player for Video & Image</title>
-    <style>
-      html,
-      /* Optional: hide scrollbar when not needed */
-      body {
-        margin: 0;
-        padding: 0;
-        scrollbar-gutter: stable;
-      }
-      .media {
-        position: absolute;
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
-        transition: opacity 1s ease-in-out;
-      }
-      .hidden {
-        opacity: 0;
-        pointer-events: none;
-      }
-      .visible {
-        opacity: 1;
-      }
-
-      .playlist-item {
-        padding: 5px 10px;
-        cursor: pointer;
-      }
-      .playlist-item:hover {
-        background: #555;
-        color: white;
-      }
-
-      #videoSlider {
-        width: 100%;
-        max-width: 100%;
-        margin: 0.5rem 0;
-      }
-
-      #videoTime {
-        font-family: monospace;
-        color: #ffffff;
-        margin-left: 10px;
-      }
-
-      .slider-container {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-      }
-      /* Scrollbar for dark mode */
-      ::-webkit-scrollbar {
-        width: 8px;
-        height: 8px;
-      }
-      ::-webkit-scrollbar-track {
-        background: #1e1e1e;
-      }
-      ::-webkit-scrollbar-thumb {
-        background-color: #4b5563;
-        border-radius: 4px;
-      }
-      ::-webkit-scrollbar-thumb:hover {
-        background-color: #60a5fa; /* blue-400 */
-      }
-      .drag-area {
-        -webkit-app-region: drag;
-      }
-      button,
-      input,
-      select {
-        -webkit-app-region: no-drag;
-      }
-    </style>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="./styles.css" />
+    <link rel="stylesheet" href="./output.css" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap"
+      rel="stylesheet"
+    />
   </head>
   <body>
     <div class="p-6 bg-zinc-900 text-white font-sans min-h-screen space-y-6">
@@ -88,18 +23,33 @@
         >
           ➕ Add File
         </button>
-        <button
-          id="btnUp"
-          class="bg-zinc-700 hover:bg-zinc-600 px-4 py-2 rounded-md text-sm"
-        >
-          ⬆️ Up
-        </button>
-        <button
-          id="btnDown"
-          class="bg-zinc-700 hover:bg-zinc-600 px-4 py-2 rounded-md text-sm"
-        >
-          ⬇️ Down
-        </button>
+        <div class="flex gap-2 my-2">
+          <button
+            id="btnPlay"
+            class="bg-green-600 hover:bg-green-500 text-white px-4 py-2 rounded"
+          >
+            ▶️ Play
+          </button>
+          <button
+            id="btnStop"
+            class="bg-red-600 hover:bg-red-500 text-white px-4 py-2 rounded"
+          >
+            ⏹️ Stop
+          </button>
+
+          <button
+            id="btnUp"
+            class="bg-zinc-700 hover:bg-zinc-600 px-4 py-2 rounded-md text-sm"
+          >
+            ⬆️ Up
+          </button>
+          <button
+            id="btnDown"
+            class="bg-zinc-700 hover:bg-zinc-600 px-4 py-2 rounded-md text-sm"
+          >
+            ⬇️ Down
+          </button>
+        </div>
         <button
           id="btnSettings"
           class="bg-zinc-700 hover:bg-zinc-600 px-4 py-2 rounded-md text-sm"
@@ -113,7 +63,7 @@
               id="alwaysOnTop"
               class="accent-blue-500 w-4 h-4"
             />
-            <span>Always on Top</span>
+            <span>onTop</span>
           </label>
         </div>
         <button
@@ -125,21 +75,24 @@
       </div>
       <ul
         id="playlistBox"
-        class="space-y-1 text-sm overflow-y-auto max-h-80 pr-1"
+        class="space-y-2 p-4 bg-zinc-800 rounded-2xl shadow-md border border-zinc-700"
       ></ul>
 
-      <div class="flex items-center gap-4">
+      <div class="w-full px-4">
         <input
           type="range"
+          title="Video Slider"
           id="videoSlider"
           min="0"
           max="100"
           step="0.1"
-          class="w-64 h-2 bg-zinc-700 rounded-lg appearance-none cursor-pointer accent-blue-500"
+          class="w-full h-2 bg-zinc-700 rounded-lg appearance-none cursor-pointer accent-blue-500 transition-all duration-50 ease-linear"
         />
-        <span id="videoTime" class="text-sm font-mono text-gray-300"
-          >00:00 / 00:00</span
-        >
+
+        <div class="flex justify-between text-sm font-mono text-gray-300 mt-1">
+          <span id="currentTime">00:00</span>
+          <span id="totalTime">00:00</span>
+        </div>
       </div>
     </div>
     <!-- Modal Edit Durasi -->
@@ -151,7 +104,7 @@
         class="bg-zinc-800 rounded-xl p-6 w-full max-w-sm shadow-xl border border-zinc-700"
       >
         <h2 class="text-lg font-semibold text-white mb-4">
-          Edit Durasi Gambar
+          Edit Image Duration
         </h2>
         <input
           id="durationInput"
@@ -165,13 +118,13 @@
             id="cancelEdit"
             class="px-4 py-2 text-sm text-gray-300 bg-zinc-600 hover:bg-zinc-500 rounded-md"
           >
-            Batal
+            Cancel
           </button>
           <button
             id="saveEdit"
             class="px-4 py-2 text-sm text-white bg-blue-600 hover:bg-blue-500 rounded-md"
           >
-            Simpan
+            Save
           </button>
         </div>
       </div>
@@ -184,22 +137,22 @@
       <div
         class="bg-zinc-800 rounded-xl p-6 w-full max-w-sm shadow-xl border border-zinc-700"
       >
-        <h2 class="text-lg font-semibold text-white mb-4">Hapus Item</h2>
+        <h2 class="text-lg font-semibold text-white mb-4">Delete Item</h2>
         <p class="text-gray-300 mb-4">
-          Apakah kamu yakin ingin menghapus item ini dari playlist?
+          Are you sure to delete this item in the playlist?
         </p>
         <div class="flex justify-end gap-3">
           <button
             id="cancelDelete"
             class="px-4 py-2 text-sm text-gray-300 bg-zinc-600 hover:bg-zinc-500 rounded-md"
           >
-            Batal
+            Cancel
           </button>
           <button
             id="confirmDelete"
             class="px-4 py-2 text-sm text-white bg-red-600 hover:bg-red-500 rounded-md"
           >
-            Ya, Hapus
+            Yes, Delete
           </button>
         </div>
       </div>
@@ -212,10 +165,17 @@
       <div
         class="bg-zinc-800 rounded-xl p-6 w-full max-w-sm shadow-xl border border-zinc-700"
       >
-        <h2 class="text-lg font-semibold text-white mb-4">
-          Mini Player Settings
-        </h2>
-
+        <div class="flex justify-between items-center mb-4">
+          <h2 class="text-lg font-semibold text-white mb-4">
+            Mini Player Settings
+          </h2>
+          <button
+            id="closeSettings"
+            class="text-red-400 hover:text-red-200 text-xl"
+          >
+            ✖
+          </button>
+        </div>
         <div class="grid grid-cols-2 gap-4">
           <label class="block text-white"
             >X:
@@ -256,7 +216,7 @@
             id="btnSetCancel"
             class="px-3 py-2 text-sm bg-zinc-600 hover:bg-zinc-500 rounded-md text-gray-200"
           >
-            Batal
+            Cancel
           </button>
           <button
             id="btnSetApply"
@@ -276,7 +236,7 @@
         class="bg-zinc-800 text-sm text-white rounded-xl p-6 w-full max-w-2xl max-h-[80vh] shadow-xl overflow-auto border border-zinc-700"
       >
         <div class="flex justify-between items-center mb-4">
-          <h2 class="text-lg font-bold">📋 Riwayat Pemutaran Media</h2>
+          <h2 class="text-lg font-bold">📋 History Playback Report</h2>
           <button
             id="closeLaporan"
             class="text-red-400 hover:text-red-200 text-xl"
@@ -286,7 +246,7 @@
         </div>
         <div class="flex flex-wrap items-center gap-3 mb-4">
           <label class="text-sm">
-            Dari:
+            From:
             <input
               type="date"
               id="filterStart"
@@ -294,7 +254,7 @@
             />
           </label>
           <label class="text-sm">
-            Sampai:
+            To:
             <input
               type="date"
               id="filterEnd"
@@ -329,13 +289,13 @@
             <thead class="bg-zinc-700 sticky top-0">
               <tr>
                 <th class="px-3 py-2 border-b border-zinc-600">No</th>
-                <th class="px-3 py-2 border-b border-zinc-600">Tanggal</th>
-                <th class="px-3 py-2 border-b border-zinc-600">Nama File</th>
+                <th class="px-3 py-2 border-b border-zinc-600">Date</th>
+                <th class="px-3 py-2 border-b border-zinc-600">FileName</th>
                 <th class="px-3 py-2 border-b border-zinc-600">
-                  Durasi (detik)
+                  Duration (seconds)
                 </th>
-                <th class="px-3 py-2 border-b border-zinc-600">Jam Mulai</th>
-                <th class="px-3 py-2 border-b border-zinc-600">Jam Selesai</th>
+                <th class="px-3 py-2 border-b border-zinc-600">Start</th>
+                <th class="px-3 py-2 border-b border-zinc-600">End</th>
               </tr>
             </thead>
             <tbody
