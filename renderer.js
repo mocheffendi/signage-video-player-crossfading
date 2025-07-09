@@ -569,10 +569,18 @@ videoSlider.addEventListener('change', () => {
 });
 
 // ========== EVENT HANDLERS ========== //
+// addBtn.onclick = async () => {
+//     const updatedList = await window.electronAPI.selectFiles();
+//     if (Array.isArray(updatedList) && updatedList.length > 0) {
+//         renderPlaylist(updatedList);
+//     }
+// };
+
 addBtn.onclick = async () => {
     const updatedList = await window.electronAPI.selectFiles();
     if (Array.isArray(updatedList) && updatedList.length > 0) {
-        renderPlaylist(updatedList);
+        playlist = updatedList; // update variabel global
+        renderPlaylist(playlist);
     }
 };
 
@@ -657,6 +665,7 @@ btnSetApply.onclick = () => {
         height: +sizeSetH.value
     };
     window.electronAPI.sendMiniBounds(bounds);
+    console.log("Updated mini bounds:", bounds);
     // settingsModal.classList.add('hidden');
 };
 
@@ -761,6 +770,7 @@ btnPlay.onclick = () => {
     console.log("play button clicked");
     // window.electronAPI?.playMedia(); // trigger IPC to main
     window.electronAPI.reloadMini();
+    window.electronAPI.reloadMain(); // trigger IPC to main
 };
 
 btnStop.onclick = () => {
@@ -771,3 +781,7 @@ btnStop.onclick = () => {
 //   window.electronAPI.reloadMini();
 // };
 
+window.electronAPI?.onUpdateMiniBounds((bounds) => {
+    console.log("📦 Received bounds from server:", bounds);
+    window.electronAPI.sendMiniBounds(bounds);
+});

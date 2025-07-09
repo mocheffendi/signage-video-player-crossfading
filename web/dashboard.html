@@ -1,0 +1,713 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+    <title>Signage Player for Video & Image</title>
+    <link rel="stylesheet" href="./styles.css" />
+    <link rel="stylesheet" href="./output.css" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap"
+      rel="stylesheet"
+    />
+  </head>
+  <body>
+    <div class="p-6 bg-zinc-900 text-white font-sans min-h-screen space-y-6">
+      <h2 class="text-xl font-bold">🎞️ Playlist</h2>
+
+      <div class="flex flex-wrap gap-2 items-center">
+        <input type="file" id="fileInput" class="hidden" title="fileInput" />
+        <button
+          id="addBtn"
+          class="bg-blue-600 hover:bg-blue-500 px-4 py-2 rounded-md text-white text-sm"
+        >
+          ➕ Add File
+        </button>
+        <div class="flex gap-2 my-2">
+          <button
+            id="btnPlay"
+            class="bg-green-600 hover:bg-green-500 text-white px-4 py-2 rounded"
+          >
+            ▶️ Play
+          </button>
+          <button
+            id="btnStop"
+            class="bg-red-600 hover:bg-red-500 text-white px-4 py-2 rounded"
+          >
+            ⏹️ Stop
+          </button>
+
+          <button
+            id="btnUp"
+            class="bg-zinc-700 hover:bg-zinc-600 px-4 py-2 rounded-md text-sm w-25 text-center"
+          >
+            ⬆️ &nbsp;&nbsp;Up&nbsp;&nbsp;
+          </button>
+          <button
+            id="btnDown"
+            class="bg-zinc-700 hover:bg-zinc-600 px-4 py-2 rounded-md text-sm"
+          >
+            ⬇️ Down
+          </button>
+        </div>
+        <button
+          id="btnSettings"
+          class="bg-zinc-700 hover:bg-zinc-600 px-4 py-2 rounded-md text-sm"
+        >
+          ⚙️ Setting
+        </button>
+        <div class="pt-3">
+          <label class="inline-flex items-center gap-2">
+            <input
+              type="checkbox"
+              id="alwaysOnTop"
+              class="accent-blue-500 w-4 h-4"
+            />
+            <span>onTop</span>
+          </label>
+        </div>
+        <button
+          id="btnLaporan"
+          class="bg-green-600 hover:bg-green-500 px-4 py-2 rounded-md text-white text-sm"
+        >
+          📄 Report
+        </button>
+      </div>
+      <ul
+        id="playlistBox"
+        class="space-y-2 p-4 bg-zinc-800 rounded-2xl shadow-md border border-zinc-700"
+      ></ul>
+
+      <div class="w-full px-4">
+        <input
+          type="range"
+          title="Video Slider"
+          id="videoSlider"
+          min="0"
+          max="100"
+          step="0.1"
+          class="w-full h-2 bg-zinc-700 rounded-lg appearance-none cursor-pointer accent-blue-500 transition-all duration-50 ease-linear"
+        />
+
+        <div class="flex justify-between text-sm font-mono text-gray-300 mt-1">
+          <span id="currentTime">00:00</span>
+          <span id="totalTime">00:00</span>
+        </div>
+      </div>
+    </div>
+    <!-- Modal Edit Durasi -->
+    <div
+      id="modalOverlay"
+      class="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center hidden z-50"
+    >
+      <div
+        class="bg-zinc-800 rounded-xl p-6 w-full max-w-sm shadow-xl border border-zinc-700"
+      >
+        <h2 class="text-lg font-semibold text-white mb-4">
+          Edit Image Duration
+        </h2>
+        <input
+          id="durationInput"
+          type="number"
+          min="1"
+          class="w-full rounded-md px-3 py-2 bg-zinc-700 text-white placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          placeholder="Durasi (detik)"
+        />
+        <div class="mt-4 flex justify-end gap-3">
+          <button
+            id="cancelEdit"
+            class="px-4 py-2 text-sm text-gray-300 bg-zinc-600 hover:bg-zinc-500 rounded-md"
+          >
+            Cancel
+          </button>
+          <button
+            id="saveEdit"
+            class="px-4 py-2 text-sm text-white bg-blue-600 hover:bg-blue-500 rounded-md"
+          >
+            Save
+          </button>
+        </div>
+      </div>
+    </div>
+    <!-- Modal Konfirmasi Hapus -->
+    <div
+      id="deleteModal"
+      class="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center hidden z-50"
+    >
+      <div
+        class="bg-zinc-800 rounded-xl p-6 w-full max-w-sm shadow-xl border border-zinc-700"
+      >
+        <h2 class="text-lg font-semibold text-white mb-4">Delete Item</h2>
+        <p class="text-gray-300 mb-4">
+          Are you sure to delete this item in the playlist?
+        </p>
+        <div class="flex justify-end gap-3">
+          <button
+            id="cancelDelete"
+            class="px-4 py-2 text-sm text-gray-300 bg-zinc-600 hover:bg-zinc-500 rounded-md"
+          >
+            Cancel
+          </button>
+          <button
+            id="confirmDelete"
+            class="px-4 py-2 text-sm text-white bg-red-600 hover:bg-red-500 rounded-md"
+          >
+            Yes, Delete
+          </button>
+        </div>
+      </div>
+    </div>
+    <!-- Modal Settings -->
+    <div
+      id="settingsModal"
+      class="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center hidden z-50"
+    >
+      <div
+        class="bg-zinc-800 rounded-xl p-6 w-full max-w-sm shadow-xl border border-zinc-700"
+      >
+        <div class="flex justify-between items-center mb-4">
+          <h2 class="text-lg font-semibold text-white mb-4">
+            Mini Player Settings
+          </h2>
+          <button
+            id="closeSettings"
+            class="text-red-400 hover:text-red-200 text-xl"
+          >
+            ✖
+          </button>
+        </div>
+        <div class="grid grid-cols-2 gap-4">
+          <label class="block text-white"
+            >X:
+            <input
+              type="number"
+              id="posSetX"
+              class="w-full px-2 py-1 bg-zinc-700 rounded-md text-white"
+            />
+          </label>
+          <label class="block text-white"
+            >Y:
+            <input
+              type="number"
+              id="posSetY"
+              class="w-full px-2 py-1 bg-zinc-700 rounded-md text-white"
+            />
+          </label>
+          <label class="block text-white"
+            >Width:
+            <input
+              type="number"
+              id="sizeSetW"
+              class="w-full px-2 py-1 bg-zinc-700 rounded-md text-white"
+            />
+          </label>
+          <label class="block text-white"
+            >Height:
+            <input
+              type="number"
+              id="sizeSetH"
+              class="w-full px-2 py-1 bg-zinc-700 rounded-md text-white"
+            />
+          </label>
+        </div>
+
+        <div class="pt-4 flex justify-end gap-3">
+          <button
+            id="btnSetCancel"
+            class="px-3 py-2 text-sm bg-zinc-600 hover:bg-zinc-500 rounded-md text-gray-200"
+          >
+            Cancel
+          </button>
+          <button
+            id="btnSetApply"
+            class="px-3 py-2 text-sm bg-blue-600 hover:bg-blue-500 rounded-md text-white"
+          >
+            Apply
+          </button>
+        </div>
+      </div>
+    </div>
+    <!-- Modal Laporan -->
+    <div
+      id="laporanModal"
+      class="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center hidden z-50"
+    >
+      <div
+        class="bg-zinc-800 text-sm text-white rounded-xl p-6 w-full max-w-2xl max-h-[80vh] shadow-xl overflow-auto border border-zinc-700"
+      >
+        <div class="flex justify-between items-center mb-4">
+          <h2 class="text-lg font-bold">📋 History Playback Report</h2>
+          <button
+            id="closeLaporan"
+            class="text-red-400 hover:text-red-200 text-xl"
+          >
+            ✖
+          </button>
+        </div>
+        <div class="flex flex-wrap items-center gap-3 mb-4">
+          <label class="text-sm">
+            From:
+            <input
+              type="date"
+              id="filterStart"
+              class="ml-1 rounded px-2 py-1 bg-zinc-700 text-white text-sm"
+            />
+          </label>
+          <label class="text-sm">
+            To:
+            <input
+              type="date"
+              id="filterEnd"
+              class="ml-1 rounded px-2 py-1 bg-zinc-700 text-white text-sm"
+            />
+          </label>
+          <button
+            id="btnFilterLog"
+            class="bg-blue-600 hover:bg-blue-500 px-3 py-1 rounded-md text-white text-sm"
+          >
+            🔍 Filter
+          </button>
+          <button
+            id="btnResetFilter"
+            class="bg-zinc-600 hover:bg-zinc-500 px-3 py-1 rounded-md text-gray-200 text-sm"
+          >
+            🔄 Reset
+          </button>
+          <button
+            id="btnExportXLSX"
+            class="bg-green-600 hover:bg-green-500 px-3 py-1 rounded-md text-white text-sm"
+          >
+            📤 Export XLSX
+          </button>
+        </div>
+
+        <div class="overflow-auto max-h-[60vh]">
+          <table
+            id="laporanTable"
+            class="min-w-full table-auto border-collapse text-sm text-left text-white"
+          >
+            <thead class="bg-zinc-700 sticky top-0">
+              <tr>
+                <th class="px-3 py-2 border-b border-zinc-600">No</th>
+                <th class="px-3 py-2 border-b border-zinc-600">Date</th>
+                <th class="px-3 py-2 border-b border-zinc-600">FileName</th>
+                <th class="px-3 py-2 border-b border-zinc-600">
+                  Duration (seconds)
+                </th>
+                <th class="px-3 py-2 border-b border-zinc-600">Start</th>
+                <th class="px-3 py-2 border-b border-zinc-600">End</th>
+              </tr>
+            </thead>
+            <tbody
+              id="laporanBody"
+              class="bg-zinc-800 divide-y divide-zinc-700"
+            >
+              <!-- data baris akan dimasukkan di sini -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      let selectedIndex = -1;
+      let deleteIndex = -1;
+      let editIndex = -1;
+      let playlist = [];
+
+      async function loadPlaylist() {
+        const res = await fetch("/api/playlist");
+        const list = await res.json();
+        const box = document.getElementById("playlistBox");
+        box.innerHTML = "";
+        list.forEach((item, i) => {
+          const li = document.createElement("li");
+          li.classList.add(
+            "flex",
+            "justify-between",
+            "items-center",
+            "px-3",
+            "py-2",
+            "rounded-md",
+            "cursor-pointer",
+            "hover:bg-zinc-700",
+            "transition-colors",
+            "duration-150"
+          );
+
+          const filename = item.path.split(/\\|\//).pop();
+          const durasiText =
+            item.type === "image" && item.duration
+              ? ` (${item.duration}s)`
+              : "";
+          const name = document.createElement("span");
+          name.textContent = `[${item.type}] ${filename}${durasiText}`;
+          li.appendChild(name);
+
+          const btnGroup = document.createElement("div");
+          btnGroup.classList.add("flex", "gap-2");
+
+          if (item.type === "image") {
+            const editBtn = document.createElement("button");
+            editBtn.textContent = "✏️";
+            editBtn.onclick = () => {
+              editIndex = i;
+              durationInput.value = item.duration || 5;
+              modalOverlay.classList.remove("hidden");
+            };
+            btnGroup.appendChild(editBtn);
+          }
+
+          const delBtn = document.createElement("button");
+          delBtn.textContent = "🗑️";
+          delBtn.classList.add(
+            "text-xs",
+            "bg-red-600",
+            "hover:bg-red-500",
+            "px-2",
+            "py-1",
+            "rounded"
+          );
+          delBtn.onclick = (e) => {
+            e.stopPropagation();
+            deleteIndex = i;
+
+            // tampilkan nama file di modal
+            // const fileName = playlist[i]?.path || "Unknown";
+            // const filename = item.path.split(/\\|\//).pop();
+            console.log(`Delete button clicked for item ${i}: ${filename}`);
+            document
+              .getElementById("deleteModal")
+              .querySelector(
+                "p"
+              ).textContent = `Are you sure to delete "${filename}" from the playlist?`;
+
+            deleteModal.classList.remove("hidden");
+          };
+
+          btnGroup.appendChild(delBtn);
+
+          li.appendChild(btnGroup);
+
+          li.onclick = () => {
+            console.log(`Item ${i} diklik: ${filename}`);
+            selectedIndex = i;
+            highlightItem?.(i); // opsional, hanya jika ada
+            // window.electronAPI.selectIndex(i); // JANGAN di web
+          };
+
+          playlistBox.appendChild(li);
+        });
+      }
+
+      async function loadLog() {
+        const res = await fetch("/api/report");
+        const data = await res.json();
+        console.log("Playback log:", data);
+      }
+
+      async function loadConfig() {
+        const res = await fetch("/api/config");
+        const config = await res.json();
+
+        document.getElementById("alwaysOnTop").checked =
+          config.alwaysOnTop ?? false;
+      }
+
+      function highlightItem(i) {
+        document.querySelectorAll("#playlistBox li").forEach((el, idx) => {
+          el.classList.toggle("bg-blue-600", idx === i);
+        });
+      }
+
+      loadPlaylist();
+      loadConfig();
+      //loadLog();
+
+      document.getElementById("btnSettings")?.addEventListener("click", () => {
+        loadConfigToModal();
+        document.getElementById("settingsModal").classList.remove("hidden");
+      });
+
+      document
+        .getElementById("closeSettings")
+        ?.addEventListener("click", () => {
+          document.getElementById("settingsModal").classList.add("hidden");
+        });
+
+      document.getElementById("btnSetCancel")?.addEventListener("click", () => {
+        document.getElementById("settingsModal").classList.add("hidden");
+      });
+
+      // Tombol Apply bisa kamu sesuaikan untuk simpan ke API
+      document
+        .getElementById("btnSetApply")
+        ?.addEventListener("click", async () => {
+          const res = await fetch("/api/config");
+          const existingConfig = await res.json();
+          console.log("Existing config:", existingConfig);
+
+          const updatedConfig = {
+            ...existingConfig,
+            x: parseInt(document.getElementById("posSetX").value),
+            y: parseInt(document.getElementById("posSetY").value),
+            width: parseInt(document.getElementById("sizeSetW").value),
+            height: parseInt(document.getElementById("sizeSetH").value),
+          };
+          console.log("Updated config:", updatedConfig);
+
+          fetch("/api/config", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(updatedConfig, null, 2),
+          }).then(() => {
+            // alert("✅ Setting updated!");
+            // document.getElementById("settingsModal").classList.add("hidden");
+          });
+        });
+
+      async function loadConfigToModal() {
+        const res = await fetch("/api/config");
+        const config = await res.json();
+
+        document.getElementById("posSetX").value = config.x ?? "";
+        document.getElementById("posSetY").value = config.y ?? "";
+        document.getElementById("sizeSetW").value = config.width ?? "";
+        document.getElementById("sizeSetH").value = config.height ?? "";
+        document.getElementById("alwaysOnTop").checked =
+          config.alwaysOnTop ?? false;
+      }
+
+      document
+        .getElementById("alwaysOnTop")
+        .addEventListener("change", async (e) => {
+          const isOnTop = e.target.checked;
+
+          // Ambil config lama
+          const res = await fetch("/api/config");
+          const existingConfig = await res.json();
+
+          // Buat config baru
+          const updatedConfig = {
+            ...existingConfig,
+            alwaysOnTop: isOnTop,
+          };
+
+          // Kirim ke server
+          await fetch("/api/config", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(updatedConfig, null, 2),
+          });
+
+          console.log("🧲 AlwaysOnTop updated:", isOnTop);
+        });
+
+      //file upload
+      document.getElementById("addBtn")?.addEventListener("click", () => {
+        document.getElementById("fileInput").click();
+      });
+
+      document
+        .getElementById("fileInput")
+        ?.addEventListener("change", async (e) => {
+          const file = e.target.files[0];
+          if (!file) return;
+
+          const formData = new FormData();
+          formData.append("file", file);
+
+          const res = await fetch("/api/upload", {
+            method: "POST",
+            body: formData,
+          });
+
+          if (res.ok) {
+            alert("✅ File berhasil diupload!");
+            loadPlaylist(); // reload playlist box
+            e.target.value = ""; // reset input
+          } else {
+            alert("❌ Upload gagal");
+          }
+        });
+
+      document.getElementById("btnStop")?.addEventListener("click", () => {
+        fetch("/api/stop", { method: "POST" }).then((res) => {
+          if (res.ok) console.log("🛑 Stop command sent!");
+        });
+      });
+      document.getElementById("btnPlay")?.addEventListener("click", () => {
+        fetch("/api/play", { method: "POST" }).then((res) => {
+          if (res.ok) console.log("Play command sent!");
+        });
+      });
+      document.getElementById("btnUp")?.addEventListener("click", async () => {
+        console.log("btnUp clicked, selectedIndex:", selectedIndex);
+        if (selectedIndex <= 0) return;
+
+        const res = await fetch("/api/playlist/up", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ index: selectedIndex }),
+        });
+
+        if (res.ok) {
+          selectedIndex -= 1; // pindahkan highlight
+          loadPlaylist();
+          setTimeout(() => highlightItem?.(selectedIndex), 100); // beri delay agar playlist sempat di-render
+        }
+      });
+      document
+        .getElementById("btnDown")
+        ?.addEventListener("click", async () => {
+          if (selectedIndex < 0) return;
+
+          const res = await fetch("/api/playlist/down", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ index: selectedIndex }),
+          });
+
+          if (res.ok) {
+            selectedIndex += 1;
+            loadPlaylist();
+            setTimeout(() => highlightItem?.(selectedIndex), 100); // beri delay agar playlist sempat di-render
+          }
+        });
+      document
+        .getElementById("saveEdit")
+        ?.addEventListener("click", async () => {
+          const duration = parseInt(
+            document.getElementById("durationInput").value
+          );
+          const res = await fetch("/api/playlist/edit", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ index: editIndex, duration }),
+          });
+
+          if (res.ok) {
+            modalOverlay.classList.add("hidden");
+            loadPlaylist();
+          }
+        });
+      document.getElementById("cancelEdit")?.addEventListener("click", () => {
+        modalOverlay.classList.add("hidden");
+        editIndex = -1; // reset index
+      });
+      document
+        .getElementById("btnDeleteConfirm")
+        ?.addEventListener("click", async () => {
+          const res = await fetch("/api/playlist/delete", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ index: deleteIndex }),
+          });
+
+          if (res.ok) {
+            deleteModal.classList.add("hidden");
+            loadPlaylist();
+          }
+        });
+      document.getElementById("cancelDelete")?.addEventListener("click", () => {
+        document.getElementById("deleteModal").classList.add("hidden");
+      });
+
+      document
+        .getElementById("confirmDelete")
+        ?.addEventListener("click", async () => {
+          const res = await fetch("/api/playlist/delete", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ index: deleteIndex }),
+          });
+
+          if (res.ok) {
+            deleteModal.classList.add("hidden");
+            selectedIndex = -1;
+            loadPlaylist();
+          } else {
+            alert("❌ Gagal menghapus item");
+          }
+        });
+    </script>
+    <script type="module">
+      import * as XLSX from "https://cdn.sheetjs.com/xlsx-0.20.0/package/xlsx.mjs";
+
+      const laporanModal = document.getElementById("laporanModal");
+      const laporanBody = document.getElementById("laporanBody");
+      const closeLaporan = document.getElementById("closeLaporan");
+      const btnLaporan = document.getElementById("btnLaporan");
+      const btnExport = document.getElementById("btnExportXLSX");
+      const btnFilter = document.getElementById("btnFilterLog");
+      const btnReset = document.getElementById("btnResetFilter");
+      const inputStart = document.getElementById("filterStart");
+      const inputEnd = document.getElementById("filterEnd");
+
+      let fullData = [];
+
+      btnLaporan?.addEventListener("click", async () => {
+        laporanModal.classList.remove("hidden");
+        await loadReport();
+      });
+
+      closeLaporan?.addEventListener("click", () => {
+        laporanModal.classList.add("hidden");
+      });
+
+      async function loadReport() {
+        const res = await fetch("/api/report");
+        const csv = await res.text();
+        const rows = csv.trim().split("\n").slice(1);
+        fullData = rows.map((line, i) => {
+          const [no, tanggal, name, durasi, start, end] = line.split(",");
+          return { no, tanggal, name, durasi, start, end };
+        });
+        renderReport(fullData);
+      }
+
+      function renderReport(data) {
+        laporanBody.innerHTML = "";
+        data.forEach((row, i) => {
+          const tr = document.createElement("tr");
+          tr.innerHTML = `
+        <td class="px-3 py-1">${i + 1}</td>
+        <td class="px-3 py-1">${row.tanggal}</td>
+        <td class="px-3 py-1">${row.name}</td>
+        <td class="px-3 py-1 text-right">${row.durasi}</td>
+        <td class="px-3 py-1">${row.start}</td>
+        <td class="px-3 py-1">${row.end}</td>
+      `;
+          laporanBody.appendChild(tr);
+        });
+      }
+
+      function filterByDate() {
+        const start = inputStart.value;
+        const end = inputEnd.value;
+
+        if (!start || !end) return renderReport(fullData);
+
+        const filtered = fullData.filter((item) => {
+          return item.tanggal >= start && item.tanggal <= end;
+        });
+        renderReport(filtered);
+      }
+
+      btnFilter?.addEventListener("click", filterByDate);
+      btnReset?.addEventListener("click", () => {
+        inputStart.value = "";
+        inputEnd.value = "";
+        renderReport(fullData);
+      });
+
+      btnExport?.addEventListener("click", () => {
+        const ws = XLSX.utils.json_to_sheet(fullData);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, "Log");
+        XLSX.writeFile(wb, "playlog.xlsx");
+      });
+    </script>
+  </body>
+</html>

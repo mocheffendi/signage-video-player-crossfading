@@ -1,7 +1,7 @@
 const { contextBridge, ipcRenderer } = require('electron');
 
 contextBridge.exposeInMainWorld('electronAPI', {
-    selectFiles: () => ipcRenderer.invoke('selectFiles'),
+    selectFiles: () => ipcRenderer.invoke("select-and-copy-files"),
     onPlaylistUpdate: (cb) => ipcRenderer.on('playlistUpdated', (_, data) => cb(data)),
     requestPlaylist: () => ipcRenderer.send('requestPlaylist'),
     selectIndex: (index) => ipcRenderer.send('selectIndex', index),
@@ -35,6 +35,10 @@ contextBridge.exposeInMainWorld('electronAPI', {
     playMedia: (callback) => ipcRenderer.send('play-media', callback),
     onPlayMedia: (callback) => ipcRenderer.on('play-media', callback),
     reloadMini: () => ipcRenderer.send('reload-mini'),
+    reloadMain: () => ipcRenderer.send('reload-main'),
     // selectIndex: (index) => ipcRenderer.send('select-index', index),
     // loadConfig: () => loadConfig()
+    // server.js kirim ke main.js terus ke renderer.js
+    // sendMiniBounds: (bounds) => ipcRenderer.send("mini-bounds", bounds),
+    onUpdateMiniBounds: (callback) => ipcRenderer.on("update-mini-bounds", (_, bounds) => callback(bounds))
 });

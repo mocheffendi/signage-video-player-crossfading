@@ -3,6 +3,7 @@ const { app, BrowserWindow, ipcMain, dialog } = require('electron');
 const fs = require('fs');
 const path = require('path');
 const xlsx = require('xlsx');
+const { fork } = require('child_process');
 
 // Path final yang digunakan di app
 const configPath = path.join(app.getPath('userData'), 'data', 'config.json');
@@ -20,11 +21,46 @@ const playlistDir = path.dirname(playlistPath);
 // };
 
 let mainWin, miniWin;
+let server;
 
 // app.whenReady().then(createWindows);
 
 // Saat app ready
 app.whenReady().then(() => {
+    const userData = app.getPath('userData');
+
+    server = fork(path.join(__dirname, "server.js"), [app.getPath("userData")]);
+
+    server.on("message", (msg) => {
+        // if (msg.type === "update-mini-bounds") {
+        //     mainWin.webContents.send("update-mini-bounds", msg.payload);
+        // }
+        if (msg.type === "update-mini-bounds") {
+            const { x, y, width, height, alwaysOnTop } = msg.payload;
+
+            miniWin.setBounds({ x, y, width, height });
+
+            if (typeof alwaysOnTop !== 'undefined') {
+                miniWin.setAlwaysOnTop(!!alwaysOnTop);
+            }
+        }
+        if (msg.type === "stop-media") {
+            console.log("🛑 Stop media playback requested from dashboard");
+            miniWin?.webContents.send("stop-media");
+        }
+        if (msg.type === "play-media") {
+            console.log("Play media playback requested from dashboard");
+            reloadMiniWindow();
+            reloadMainWindow();
+            // miniWin?.webContents.send("play-media");
+        }
+    });
+
+    ipcMain.on("mini-bounds", (event, bounds) => {
+        console.log("📐 Apply mini bounds:", bounds);
+        // You can implement actual window resizing here if needed
+    });
+    // const server = fork(path.join(__dirname, 'server.js'), [userData]);
 
     // Lanjutkan inisialisasi jendela
     // Baru lanjut buat jendela
@@ -96,6 +132,7 @@ function createWindows() {
         if (miniWin && !miniWin.isDestroyed()) {
             miniWin.close();
         }
+        server.kill();
     });
 
     mainWin.webContents.on('did-finish-load', () => {
@@ -103,6 +140,51 @@ function createWindows() {
         mainWin.webContents.send('init-config', config);
     });
 }
+
+
+
+ipcMain.handle("select-and-copy-files", async () => {
+    const result = await dialog.showOpenDialog({
+        properties: ["openFile", "multiSelections"],
+        filters: [
+            { name: "Media", extensions: ["mp4", "mov", "jpg", "jpeg", "png", "gif"] },
+        ],
+    });
+
+    if (result.canceled) return [];
+
+    const userMediaPath = path.join(app.getPath("userData"), "media");
+    const playlistPath = path.join(app.getPath("userData"), "data", "playlist.json");
+
+    if (!fs.existsSync(userMediaPath)) fs.mkdirSync(userMediaPath, { recursive: true });
+
+    const playlist = JSON.parse(fs.readFileSync(playlistPath, "utf-8"));
+    const newItems = [];
+
+    for (const fullPath of result.filePaths) {
+        const fileName = path.basename(fullPath);
+        const ext = path.extname(fileName).toLowerCase();
+        const type = /\.(jpg|jpeg|png|gif)$/i.test(ext) ? "image" : "video";
+        const destination = path.join(userMediaPath, fileName);
+
+        // Salin file ke media
+        fs.copyFileSync(fullPath, destination);
+
+        const item = {
+            path: destination.replace(/\\/g, "\\\\"), // agar JSON valid
+            name: fileName,
+            type,
+            ...(type === "image" ? { duration: 5 } : {})
+        };
+
+        playlist.push(item);
+        newItems.push(item);
+    }
+
+    fs.writeFileSync(playlistPath, JSON.stringify(playlist, null, 2));
+    return playlist;
+});
+
 
 // IPC: Add file
 ipcMain.handle('selectFiles', async () => {
@@ -352,7 +434,17 @@ function reloadMiniWindow() {
     }
 }
 
+function reloadMainWindow() {
+    if (mainWin && !mainWin.isDestroyed()) {
+        mainWin.reload();
+    }
+}
+
 // You can wire that up to an IPC event:
 ipcMain.on('reload-mini', () => {
     reloadMiniWindow();
+});
+
+ipcMain.on('reload-main', () => {
+    reloadMainWindow();
 });
