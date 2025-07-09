@@ -3,6 +3,8 @@ const fs = require("fs");
 const path = require("path");
 const multer = require("multer");
 
+let currentPlaying = null;
+
 const userDataPath = process.argv[2]; // dari Electron
 const dataDir = path.join(userDataPath, "data");
 const configPath = path.join(dataDir, "config.json");
@@ -208,6 +210,29 @@ app.post("/api/playlist/edit", (req, res) => {
     }
 });
 
+process.on("message", (msg) => {
+    if (msg.type === "now-playing") {
+        currentPlaying = msg.payload;
+    }
+    if (msg.type === "videoProgress") {
+        // Kirim ke semua client yang terhubung
+        videoTime = msg.payload;
+    }
+});
+
+app.get("/api/now-playing", (req, res) => {
+    res.json(currentPlaying || {});
+});
+
+app.get("/api/video-progress", (req, res) => {
+    res.json(videoTime || { current: 0, total: 0 });
+});
+
+app.post("/api/seekTo", (req, res) => {
+    const { time } = req.body;
+    process.send?.({ type: "seekTo", payload: time });
+    res.sendStatus(200);
+});
 
 const PORT = 3000;
 app.listen(PORT, () => {

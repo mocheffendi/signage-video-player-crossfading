@@ -631,6 +631,72 @@
             alert("❌ Gagal menghapus item");
           }
         });
+      setInterval(async () => {
+        const res = await fetch("/api/now-playing");
+        const data = await res.json();
+
+        if (typeof data.index === "number") {
+          //highlightItem(data.index);
+          highlightItem?.(data.index);
+          console.log("Current playing index:", data.index);
+          selectedIndex = data.index;
+
+          document
+            .querySelectorAll(".playlist-item")
+            [data.index]?.scrollIntoView({
+              behavior: "smooth",
+              block: "center",
+            });
+        }
+      }, 1000); // update tiap detik
+      //function highlightItem(index) {
+      //  document.querySelectorAll(".playlist-item").forEach((el, i) => {
+      //    el.classList.toggle("bg-zinc-700", i === index); // aktif
+      //    el.classList.toggle("bg-zinc-800", i !== index); // nonaktif
+      //  });
+      //}
+
+      setInterval(async () => {
+        const res = await fetch("/api/video-progress");
+        const data = await res.json();
+        console.log("Video progress data:", data);
+
+        if (data.total > 0) {
+          document.getElementById("videoSlider").disabled = false;
+          document.getElementById("videoSlider").max = data.total;
+          document.getElementById("videoSlider").value = data.current;
+
+          document.getElementById("currentTime").textContent = formatTime(
+            data.current
+          );
+          document.getElementById("totalTime").textContent = formatTime(
+            data.total
+          );
+        } else {
+          document.getElementById("videoSlider").disabled = true;
+          document.getElementById("currentTime").textContent = "--:--";
+          document.getElementById("totalTime").textContent = "--:--";
+        }
+      }, 1000);
+
+      function formatTime(sec) {
+        const m = Math.floor(sec / 60);
+        const s = Math.floor(sec % 60);
+        return `${m.toString().padStart(2, "0")}:${s
+          .toString()
+          .padStart(2, "0")}`;
+      }
+
+      document
+        .getElementById("videoSlider")
+        .addEventListener("input", async (e) => {
+          const value = parseInt(e.target.value);
+          await fetch("/api/seekTo", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ time: value }),
+          });
+        });
     </script>
     <script type="module">
       import * as XLSX from "https://cdn.sheetjs.com/xlsx-0.20.0/package/xlsx.mjs";

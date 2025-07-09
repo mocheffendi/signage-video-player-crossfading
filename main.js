@@ -54,6 +54,9 @@ app.whenReady().then(() => {
             reloadMainWindow();
             // miniWin?.webContents.send("play-media");
         }
+        if (msg.type === "seekTo") {
+            miniWin?.webContents.send("seekTo", msg.payload);
+        }
     });
 
     ipcMain.on("mini-bounds", (event, bounds) => {
@@ -301,6 +304,7 @@ ipcMain.on('videoProgress', (_, data) => {
     if (mainWin && !mainWin.isDestroyed()) {
         mainWin.webContents.send('updateSlider', data);
     }
+    server.send?.({ type: "videoProgress", payload: data });
 });
 
 ipcMain.on('seekTo', (_, val) => {
@@ -403,6 +407,7 @@ ipcMain.on('nowPlaying', (_, data) => {
     if (mainWin && !mainWin.isDestroyed()) {
         mainWin.webContents.send('nowPlaying', data);
     }
+    server.send?.({ type: "now-playing", payload: data });
 });
 
 ipcMain.on('play-item', (event, index) => {
