@@ -73,6 +73,12 @@
         >
           📄 Report
         </button>
+        <button
+          id="btnSystem"
+          class="bg-zinc-600 hover:bg-zinc-500 text-white px-3 py-2 rounded-md text-sm"
+        >
+          🖥️ System Info
+        </button>
       </div>
       <ul
         id="playlistBox"
@@ -96,13 +102,14 @@
         </div>
       </div>
     </div>
+
     <!-- Modal Edit Durasi -->
     <div
       id="modalOverlay"
       class="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center hidden z-50"
     >
       <div
-        class="bg-zinc-800 rounded-xl p-6 w-full max-w-sm shadow-xl border border-zinc-700"
+        class="bg-zinc-800 text-white rounded-xl p-6 w-full max-w-lg shadow-xl border border-zinc-700 transform transition duration-300 scale-95 opacity-0"
       >
         <h2 class="text-lg font-semibold text-white mb-4">
           Edit Image Duration
@@ -306,6 +313,48 @@
               <!-- data baris akan dimasukkan di sini -->
             </tbody>
           </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal System Info -->
+    <div
+      id="modalSystem"
+      class="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center hidden z-50"
+    >
+      <div
+        class="bg-zinc-800 text-sm text-white rounded-xl p-6 w-full max-w-2xl max-h-[80vh] shadow-xl overflow-auto border border-zinc-700"
+      >
+        <div class="flex justify-between items-center mb-4">
+          <h2 class="text-lg font-bold">🖥️ System Information</h2>
+          <button
+            id="closeSystemModal"
+            class="text-red-400 hover:text-red-200 text-xl"
+          >
+            ✖
+          </button>
+        </div>
+        <div id="systemLoading" class="flex justify-center items-center py-6">
+          <div
+            class="h-8 w-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"
+          ></div>
+        </div>
+
+        <div id="systemContent" class="space-y-2 text-sm hidden">
+          <!-- semua isi data sistem kamu pindahkan ke sini -->
+          <div><strong>🧠 CPU:</strong> <span id="sys-cpu">-</span></div>
+          <div><strong>💾 RAM:</strong> <span id="sys-ram">-</span></div>
+          <div><strong>🗂️ Disk:</strong> <span id="sys-disk">-</span></div>
+          <div><strong>🖥️ OS:</strong> <span id="sys-platform">-</span></div>
+          <div><strong>⏱️ Uptime:</strong> <span id="sys-uptime">-</span></div>
+          <div><strong>🌡️ CPU Temp:</strong> <span id="sys-temp">-</span></div>
+          <div><strong>🌐 IP Address:</strong> <span id="sys-ip">-</span></div>
+          <div>
+            <strong>🌎 Public IP:</strong> <span id="sys-public-ip">-</span>
+          </div>
+          <div>
+            <strong>📶 Network Speed:</strong> <span id="sys-net">-</span>
+          </div>
         </div>
       </div>
     </div>
@@ -696,6 +745,136 @@
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ time: value }),
           });
+        });
+
+      async function loadSystemInfo() {
+        const res = await fetch("/api/system-info");
+        const data = await res.json();
+        console.log("🖥️ System Info:", data);
+
+        document.getElementById(
+          "sys-cpu"
+        ).textContent = `${data.cpu.model} (${data.cpu.cores} cores @ ${data.cpu.speed}GHz)`;
+        document.getElementById("sys-ram").textContent = `${(
+          data.freeMem /
+          1024 ** 3
+        ).toFixed(1)} GB free / ${(data.totalMem / 1024 ** 3).toFixed(
+          1
+        )} GB total`;
+        document.getElementById("sys-disk").textContent = `${(
+          data.disk.free /
+          1024 ** 3
+        ).toFixed(1)} GB free / ${(data.disk.total / 1024 ** 3).toFixed(1)} GB`;
+        document.getElementById(
+          "sys-platform"
+        ).textContent = `${data.platform} ${data.arch}`;
+        document.getElementById("sys-uptime").textContent = `${Math.floor(
+          data.uptime / 60
+        )} min`;
+      }
+
+      loadSystemInfo(); // panggil saat halaman dibuka
+
+      function formatLongUptime(seconds) {
+        const tahun = Math.floor(seconds / (365 * 24 * 60 * 60));
+        seconds %= 365 * 24 * 60 * 60;
+
+        const bulan = Math.floor(seconds / (30 * 24 * 60 * 60));
+        seconds %= 30 * 24 * 60 * 60;
+
+        const hari = Math.floor(seconds / (24 * 60 * 60));
+        seconds %= 24 * 60 * 60;
+
+        const jam = Math.floor(seconds / (60 * 60));
+
+        const parts = [];
+        if (tahun) parts.push(`${tahun} tahun`);
+        if (bulan) parts.push(`${bulan} bulan`);
+        if (hari) parts.push(`${hari} hari`);
+        if (jam) parts.push(`${jam} jam`);
+
+        return parts.join(", ");
+      }
+
+      document
+        .getElementById("btnSystem")
+        ?.addEventListener("click", async () => {
+          const modal = document.getElementById("modalSystem");
+          const content = document.getElementById("systemContent");
+          const loading = document.getElementById("systemLoading");
+          const pubIpSpan = document.getElementById("sys-public-ip");
+
+          modal.classList.remove("hidden");
+          content.classList.add("hidden");
+          loading.classList.remove("hidden");
+
+          try {
+            const res = await fetch("/api/system-info");
+            const data = await res.json();
+
+            document.getElementById(
+              "sys-cpu"
+            ).textContent = `${data.cpu.model} (${data.cpu.cores} cores @ ${data.cpu.speed}GHz)`;
+            document.getElementById("sys-ram").textContent = `${(
+              data.mem.free /
+              1024 ** 3
+            ).toFixed(1)} GB free / ${(data.mem.total / 1024 ** 3).toFixed(
+              1
+            )} GB total`;
+            document.getElementById("sys-disk").textContent = `${(
+              data.disk.free /
+              1024 ** 3
+            ).toFixed(1)} GB free / ${(data.disk.total / 1024 ** 3).toFixed(
+              1
+            )} GB`;
+            document.getElementById(
+              "sys-platform"
+            ).textContent = `${data.platform} ${data.arch}`;
+            document.getElementById("sys-uptime").textContent =
+              formatLongUptime(data.uptime);
+            document.getElementById("sys-temp").textContent = data.cpu
+              .temperature
+              ? `${data.cpu.temperature} °C`
+              : "N/A";
+            document.getElementById("sys-ip").textContent = data.network.ip;
+            document.getElementById("sys-net").textContent = `⬇ ${(
+              data.network.rx / 1024
+            ).toFixed(1)} KB/s | ⬆ ${(data.network.tx / 1024).toFixed(1)} KB/s`;
+
+            // tampilkan konten, sembunyikan loading
+            content.classList.remove("hidden");
+            loading.classList.add("hidden");
+
+            // 🔄 Ambil public IP terpisah (tidak menghambat)
+            setTimeout(async () => {
+              const res = await fetch("/api/public-ip");
+              const ipData = await res.json();
+              pubIpSpan.textContent = ipData.ip;
+            }, 200);
+          } catch (err) {
+            console.error("⚠️ Gagal memuat system info:", err);
+          }
+        });
+
+      document
+        .getElementById("closeSystemModal")
+        ?.addEventListener("click", () => {
+          const modal = document.getElementById("modalSystem");
+          const content = document.getElementById("modalSystemContent");
+
+          document.getElementById("modalSystem").classList.add("hidden");
+
+          // Reset loading state untuk buka berikutnya
+          document.getElementById("systemLoading").classList.remove("hidden");
+          document.getElementById("systemContent").classList.add("hidden");
+
+          content.classList.remove("scale-100", "opacity-100");
+          content.classList.add("scale-95", "opacity-0");
+
+          // tunggu transisi selesai, lalu sembunyikan
+          setTimeout(() => {
+            modal.classList.add("hidden");
+          }, 300);
         });
     </script>
     <script type="module">

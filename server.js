@@ -2,6 +2,9 @@ const express = require("express");
 const fs = require("fs");
 const path = require("path");
 const multer = require("multer");
+const os = require("os");
+const si = require("systeminformation");
+// const fetch = require("node-fetch"); // untuk ambil IP publik
 
 let currentPlaying = null;
 
@@ -10,11 +13,17 @@ const dataDir = path.join(userDataPath, "data");
 const configPath = path.join(dataDir, "config.json");
 const playlistPath = path.join(dataDir, "playlist.json");
 const csvPath = path.join(dataDir, "playlog.csv");
+const systemPath = path.join(dataDir, "system.json");
 
 const mediaDir = path.join(userDataPath, "media");
 if (!fs.existsSync(mediaDir)) fs.mkdirSync(mediaDir, { recursive: true });
 const tempDir = path.join(__dirname, "temp");
 if (!fs.existsSync(tempDir)) fs.mkdirSync(tempDir);
+
+if (!fs.existsSync(dataDir)) fs.mkdirSync(dataDir, { recursive: true });
+
+updateSystemInfo(); // pertama kali
+setInterval(updateSystemInfo, 60_000); // tiap 1 menit
 
 const upload = multer({ dest: tempDir });
 
@@ -234,7 +243,90 @@ app.post("/api/seekTo", (req, res) => {
     res.sendStatus(200);
 });
 
+async function updateSystemInfo() {
+    try {
+        const [mem, cpu, disk, temp, net, netStats] = await Promise.all([
+            si.mem(),
+            si.cpu(),
+            si.fsSize(),
+            si.cpuTemperature(),
+            si.networkInterfaces(),
+            si.networkStats(),
+        ]);
+
+        const iface =
+            net.find(i => i.ip4 && !i.internal && /wi-?fi|wlan|wl/i.test(i.iface)) ||
+            net.find(i => i.ip4 && !i.internal) || {};
+
+        const stats = netStats[0] || {};
+
+        const publicIp = await fetch("https://api64.ipify.org?format=json")
+            .then(r => r.json())
+            .then(d => d.ip)
+            .catch(() => "-");
+
+        const system = {
+            timestamp: Date.now(),
+            platform: os.platform(),
+            arch: os.arch(),
+            hostname: os.hostname(),
+            uptime: os.uptime(),
+            cpu: {
+                model: `${cpu.manufacturer} ${cpu.brand}`,
+                cores: cpu.cores,
+                speed: cpu.speed,
+                temperature: temp.main || null,
+            },
+            mem: {
+                total: mem.total,
+                free: mem.available,
+            },
+            disk: {
+                total: disk[0]?.size || 0,
+                free: disk[0]?.available || 0,
+                mount: disk[0]?.mount || "?",
+            },
+            network: {
+                ip: iface.ip4 || "-",
+                publicIp,
+                iface: iface.iface || "?",
+                rx: stats.rx_sec || 0,
+                tx: stats.tx_sec || 0,
+            }
+        };
+
+        fs.writeFileSync(systemPath, JSON.stringify(system, null, 2));
+        console.log("✅ system.json updated");
+    } catch (err) {
+        console.error("❌ Failed to update system.json:", err.message);
+    }
+}
+
+
+
+app.get("/api/system-info", (req, res) => {
+    try {
+        const raw = fs.readFileSync(systemPath, "utf-8");
+        res.json(JSON.parse(raw));
+    } catch {
+        res.status(404).json({ error: "No system info available" });
+    }
+});
+
+app.get("/api/public-ip", async (req, res) => {
+    try {
+        const result = await fetch("https://api64.ipify.org?format=json");
+        const data = await result.json();
+        res.json({ ip: data.ip });
+    } catch {
+        res.json({ ip: "-" });
+    }
+});
+
 const PORT = 3000;
 app.listen(PORT, () => {
     console.log(`Web server running at http://localhost:${PORT}`);
+
+    // Semua inisialisasi sudah selesai
+    process.send?.("ready");
 });

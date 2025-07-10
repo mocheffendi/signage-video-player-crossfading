@@ -22,6 +22,7 @@ const playlistDir = path.dirname(playlistPath);
 
 let mainWin, miniWin;
 let server;
+let serverReady = false;
 
 // app.whenReady().then(createWindows);
 
@@ -31,10 +32,30 @@ app.whenReady().then(() => {
 
     server = fork(path.join(__dirname, "server.js"), [app.getPath("userData")]);
 
+    server.on("error", (err) => {
+        console.error("❌ server.js gagal dijalankan:", err.message);
+        server = null;
+        serverReady = false;
+    });
+
+    server.on("exit", (code, signal) => {
+        console.warn(`⚠️ server.js exited. Code: ${code}, Signal: ${signal}`);
+        server = null;
+        serverReady = false;
+    });
+
     server.on("message", (msg) => {
         // if (msg.type === "update-mini-bounds") {
         //     mainWin.webContents.send("update-mini-bounds", msg.payload);
         // }
+
+        // tangani message kalau server berhasil jalan
+        if (msg === "ready") {
+            serverReady = true;
+        }
+
+        console.log("serverReady:", serverReady);
+
         if (msg.type === "update-mini-bounds") {
             const { x, y, width, height, alwaysOnTop } = msg.payload;
 
@@ -135,7 +156,10 @@ function createWindows() {
         if (miniWin && !miniWin.isDestroyed()) {
             miniWin.close();
         }
-        server.kill();
+        if (server && !server.killed) {
+            server.kill();
+        }
+        server = null; // hindari error saat server.send
     });
 
     mainWin.webContents.on('did-finish-load', () => {
@@ -188,6 +212,17 @@ ipcMain.handle("select-and-copy-files", async () => {
     return playlist;
 });
 
+function safeSendToServer(msg) {
+    if (server && typeof server.send === "function" && !server.killed && serverReady) {
+        try {
+            server.send(msg);
+        } catch (err) {
+            console.warn("❌ Gagal kirim ke server:", err.message);
+        }
+    } else {
+        console.warn("⚠️ server belum tersedia atau sudah mati, tidak bisa kirim:", msg.type);
+    }
+}
 
 // IPC: Add file
 ipcMain.handle('selectFiles', async () => {
@@ -304,7 +339,8 @@ ipcMain.on('videoProgress', (_, data) => {
     if (mainWin && !mainWin.isDestroyed()) {
         mainWin.webContents.send('updateSlider', data);
     }
-    server.send?.({ type: "videoProgress", payload: data });
+    safeSendToServer({ type: "videoProgress", payload: data });
+    // server.send?.({ type: "videoProgress", payload: data });
 });
 
 ipcMain.on('seekTo', (_, val) => {

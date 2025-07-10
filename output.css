@@ -40,6 +40,7 @@
     --radius-lg: 0.5rem;
     --radius-xl: 0.75rem;
     --radius-2xl: 1rem;
+    --animate-spin: spin 1s linear infinite;
     --default-transition-duration: 150ms;
     --default-transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
     --default-font-family: var(--font-sans);
@@ -61,7 +62,6 @@
   :host {
     line-height: 1.5;
     -webkit-text-size-adjust: 100%;
-    text-size-adjust: 100%;
     tab-size: 4;
     font-family: var(
       --default-font-family,
@@ -308,6 +308,12 @@
   .h-4 {
     height: calc(var(--spacing) * 4);
   }
+  .h-8 {
+    height: calc(var(--spacing) * 8);
+  }
+  .h-screen {
+    height: 100vh;
+  }
   .max-h-\[60vh\] {
     max-height: 60vh;
   }
@@ -319,6 +325,12 @@
   }
   .w-4 {
     width: calc(var(--spacing) * 4);
+  }
+  .w-8 {
+    width: calc(var(--spacing) * 8);
+  }
+  .w-25 {
+    width: calc(var(--spacing) * 25);
   }
   .w-full {
     width: 100%;
@@ -337,6 +349,9 @@
   }
   .border-collapse {
     border-collapse: collapse;
+  }
+  .animate-spin {
+    animation: var(--animate-spin);
   }
   .cursor-pointer {
     cursor: pointer;
@@ -416,6 +431,9 @@
   .rounded-2xl {
     border-radius: var(--radius-2xl);
   }
+  .rounded-full {
+    border-radius: calc(infinity * 1px);
+  }
   .rounded-lg {
     border-radius: var(--radius-lg);
   }
@@ -429,15 +447,25 @@
     border-style: var(--tw-border-style);
     border-width: 1px;
   }
+  .border-4 {
+    border-style: var(--tw-border-style);
+    border-width: 4px;
+  }
   .border-b {
     border-bottom-style: var(--tw-border-style);
     border-bottom-width: 1px;
+  }
+  .border-blue-500 {
+    border-color: var(--color-blue-500);
   }
   .border-zinc-600 {
     border-color: var(--color-zinc-600);
   }
   .border-zinc-700 {
     border-color: var(--color-zinc-700);
+  }
+  .border-t-transparent {
+    border-top-color: transparent;
   }
   .bg-black {
     background-color: var(--color-black);
@@ -484,11 +512,17 @@
   .py-2 {
     padding-block: calc(var(--spacing) * 2);
   }
+  .py-6 {
+    padding-block: calc(var(--spacing) * 6);
+  }
   .pt-3 {
     padding-top: calc(var(--spacing) * 3);
   }
   .pt-4 {
     padding-top: calc(var(--spacing) * 4);
+  }
+  .text-center {
+    text-align: center;
   }
   .text-left {
     text-align: left;
@@ -721,6 +755,11 @@
 @property --tw-ease {
   syntax: "*";
   inherits: false;
+}
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
 }
 @layer properties {
   @supports ((-webkit-hyphens: none) and (not (margin-trim: inline))) or
